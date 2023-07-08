@@ -1,22 +1,23 @@
 import { msgDbMessage, msgDebug } from './messages.js';
 import { obj2string, str2obj } from './utils.js';
-import { IDb } from '../entities/interfaces.js';
+import { IDb, IUser } from '../entities/interfaces.js';
+import { WsAction } from '../entities/enums.js';
 
 const db: IDb = {
   users: [],
   rooms: [],
-}
+};
 
 const userLogin = (data: string, id: number) => {
   const {name, password} = str2obj(data)
   const existUser = db.users.find(user => user.name === name)
 
-  if (existUser) {
+  if (existUser && existUser.password !== password) {
     return {
-      type: 'reg',
+      type: WsAction.reg,
       data: obj2string({
         error: true,
-        errorText: 'This user already exist',
+        errorText: 'Wrong password',
       }),
       id,
     };
@@ -30,7 +31,7 @@ const userLogin = (data: string, id: number) => {
   msgDebug(db)
 
   return {
-    type: 'reg',
+    type: WsAction.reg,
     data: obj2string({
       name,
       index,
@@ -42,8 +43,9 @@ const userLogin = (data: string, id: number) => {
 
 const createRoom = () => {
   const id = db.rooms.length
-  const {name, index} = db.users[0]
-  db.rooms.push({id, roomUsers: [{name, index}]})
+  const roomUsers: Omit<IUser, 'password'>[] = [];
+  db.users.forEach(({name, index}) => roomUsers.push({name, index}))
+  db.rooms.push({id, roomUsers})
 
   msgDebug(db)
 

@@ -1,5 +1,5 @@
 import { msgServerStart, msgServerStop, msgWsRequest } from '../modules/messages.js';
-import { ServerType } from '../entities/enums.js';
+import { ServerType, WsAction } from '../entities/enums.js';
 import { WS_PORT } from '../modules/config.js';
 import { WebSocketServer } from 'ws';
 import { actionsRouter } from '../modules/actions.js';
@@ -14,7 +14,13 @@ export const startWsServer = () => {
     msgWsRequest(request);
     ws.on('message', async (data) => {
       const response = actionsRouter(data);
-      if (response) ws.send(obj2string(response));
+      const privateActions = [WsAction.reg];
+      wss.clients.forEach(function each(client) {
+        if (response && !privateActions.includes(response.type)) {
+          client.send(obj2string(response));
+        }
+        else if (response) ws.send(obj2string(response));
+      });
     });
   });
 
