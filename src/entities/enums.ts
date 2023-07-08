@@ -1,6 +1,6 @@
 export enum ServerType {
-  http = 'Web',
-  ws = 'Web Socket',
+  http = 'HTTP',
+  ws = 'WS',
 }
 
 export enum Color {
