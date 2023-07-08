@@ -37,10 +37,17 @@ export enum WsAction {
   single_play = 'single_play',
   add_user_to_room = 'add_user_to_room',
   create_game = 'create_game', // game id and enemy id
+  add_ships = 'add_ships',
   start_game = 'start_game', // information about game and player's ships positions
   turn = 'turn', // who is shooting now
   attack = 'attack', // coordinates of shot and status
   finish = 'finish', // id of the winner
   update_room = 'update_room', // list of rooms and players in rooms
   update_winners = 'update_winners', // send score table to players
+}
+
+export enum BroadcastType {
+  personal = 'personal',
+  opposer = 'opposer',
+  public = 'public',
 }

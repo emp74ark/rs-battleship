@@ -1,29 +1,33 @@
 export interface IUser {
-  name: string,
-  password: string,
-  index: number,
-  uuid: number,
+  name: string;
+  password: string;
+  index: number;
+  uuid: number;
 }
 
 export interface IShip {
-  size: number,
-  x: number,
-  y: number,
+  position: {
+    x: number;
+    y: number;
+  };
+  direction: boolean;
+  length: number;
+  type: 'small' | 'medium' | 'large' | 'huge';
 }
 
 export interface IRoom {
-  id: number,
-  roomUsers: Omit<IUser, 'password'>[],
+  id: number;
+  roomUsers: Omit<IUser, 'password'>[];
 }
 
 export interface IGame {
-  id: number,
-  players?: string[],
-  board?: string;
-  ships?: IShip[],
+  gameId: number;
+  ships?: IShip[];
+  indexPlayer?: number;
 }
+
 export interface IDb {
-  users: IUser[],
-  rooms: IRoom[],
-  games: IGame[]
+  users: IUser[];
+  rooms: IRoom[];
+  games: IGame[];
 }

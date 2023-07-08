@@ -29,8 +29,6 @@ const userLogin = (data: string, id: number, uuid: number) => {
 
   msgDbMessage(`user '${name}' was created`);
 
-  msgDebug(db)
-
   return {
     type: WsAction.reg,
     data: obj2string({
@@ -46,14 +44,14 @@ const getUser = (uuid: number) => {
   return db.users.find(user => user.uuid === uuid);
 }
 
+const getOpposer = (uuid: number) => {
+  return db.users.find(user => user.uuid !== uuid);
+}
+
 const createRoom = (uuid: number) => {
   const id = db.rooms.length
   db.rooms.push({id, roomUsers: []})
-
-  msgDebug(db)
-
   msgDbMessage(`room with id '${id}' was created`);
-
   return id;
 }
 
@@ -71,9 +69,41 @@ const getRoom = (roomId: number) => {
 }
 
 const createGame = () => {
-  const id = db.games.length;
-  db.games.push({id})
-  return id;
+  const gameId = db.games.length;
+  db.games.push({gameId})
+  return gameId;
+}
+
+const addShips = (data: string) => {
+  const {gameId, ships, indexPlayer} = str2obj(data)
+  const game = db.games.find(game => game.gameId === gameId);
+
+  if (game && game.indexPlayer === undefined || game && game.indexPlayer === indexPlayer) {
+    db.games.map(game => {
+      game.ships = ships;
+      game.indexPlayer = indexPlayer;
+    })
+  }
+
+  else if (game && game.indexPlayer !== indexPlayer) {
+    db.games.push({
+      gameId,
+      ships,
+      indexPlayer
+    })
+  }
+
+  msgDebug(db)
+}
+
+const getShips = (uuid: number) => {
+  const indexPlayer = getUser(uuid)?.index
+  if (indexPlayer) {
+    return {
+      ships: db.games.find(game => game.indexPlayer === indexPlayer)?.ships,
+      indexPlayer,
+    }
+  }
 }
 
 export {
@@ -82,5 +112,8 @@ export {
   getRoom,
   addToRoom,
   getUser,
+  getOpposer,
   createGame,
+  addShips,
+  getShips
 }

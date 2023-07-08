@@ -1,5 +1,5 @@
 import { msgServerStart, msgServerStop, msgWsRequest } from '../modules/messages.js';
-import { ServerType, WsAction } from '../entities/enums.js';
+import { BroadcastType, ServerType, WsAction } from '../entities/enums.js';
 import { WS_PORT } from '../modules/config.js';
 import { WebSocket, WebSocketServer } from 'ws';
 import { actionsRouter } from '../modules/actions.js';
@@ -19,17 +19,21 @@ export const startWsServer = () => {
     ws.uuid = Date.now()
     ws.on('message', async (data) => {
       const response = actionsRouter(data, ws.uuid);
-      const privateActions = [WsAction.reg, WsAction.create_room, WsAction.add_user_to_room];
       if (response) {
-        // to all
-        wss.clients.forEach((client) => {
-          response.forEach(i => {
-            if (!privateActions.includes(i.type)) client.send(obj2string(i))
-          })
-        });
-        // to one
-        response.forEach(i => {
-          if (privateActions.includes(i.type)) ws.send(obj2string(i))
+        response.forEach(r => {
+          if (r.broadcast === BroadcastType.personal) {
+            ws.send(obj2string(r))
+          }
+          else if (r.broadcast === BroadcastType.opposer) {
+            wss.clients.forEach(client => {
+              if (client !== ws) client.send(obj2string(r));
+            })
+          }
+          else {
+            wss.clients.forEach((client) => {
+              client.send(obj2string(r));
+            });
+          }
         })
       }
     });
