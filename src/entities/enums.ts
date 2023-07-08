@@ -35,6 +35,7 @@ export enum WsAction {
   reg = 'reg', // player registration/login
   create_room = 'create_room',
   single_play = 'single_play',
+  add_user_to_room = 'add_user_to_room',
   create_game = 'create_game', // game id and enemy id
   start_game = 'start_game', // information about game and player's ships positions
   turn = 'turn', // who is shooting now

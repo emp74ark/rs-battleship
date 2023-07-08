@@ -1,14 +1,15 @@
 import { msgDbMessage, msgDebug } from './messages.js';
 import { obj2string, str2obj } from './utils.js';
-import { IDb, IUser } from '../entities/interfaces.js';
+import { IDb } from '../entities/interfaces.js';
 import { WsAction } from '../entities/enums.js';
 
 const db: IDb = {
   users: [],
   rooms: [],
+  games: [],
 };
 
-const userLogin = (data: string, id: number) => {
+const userLogin = (data: string, id: number, uuid: number) => {
   const {name, password} = str2obj(data)
   const existUser = db.users.find(user => user.name === name)
 
@@ -24,7 +25,7 @@ const userLogin = (data: string, id: number) => {
   }
 
   const index = db.users.length;
-  db.users.push({name, password, index})
+  db.users.push({name, password, index, uuid})
 
   msgDbMessage(`user '${name}' was created`);
 
@@ -41,11 +42,13 @@ const userLogin = (data: string, id: number) => {
   };
 }
 
-const createRoom = () => {
+const getUser = (uuid: number) => {
+  return db.users.find(user => user.uuid === uuid);
+}
+
+const createRoom = (uuid: number) => {
   const id = db.rooms.length
-  const roomUsers: Omit<IUser, 'password'>[] = [];
-  db.users.forEach(({name, index}) => roomUsers.push({name, index}))
-  db.rooms.push({id, roomUsers})
+  db.rooms.push({id, roomUsers: []})
 
   msgDebug(db)
 
@@ -54,12 +57,30 @@ const createRoom = () => {
   return id;
 }
 
+const addToRoom = (roomId: number, uuid: number) => {
+  const user = getUser(uuid);
+  db.rooms.map(room => {
+    if (room.id === roomId && user && !room.roomUsers.includes(user)) {
+      room.roomUsers = [...room.roomUsers, user];
+    }
+  })
+}
+
 const getRoom = (roomId: number) => {
   return db.rooms.filter(room => room.id === roomId);
+}
+
+const createGame = () => {
+  const id = db.games.length;
+  db.games.push({id})
+  return id;
 }
 
 export {
   userLogin,
   createRoom,
   getRoom,
+  addToRoom,
+  getUser,
+  createGame,
 }
