@@ -1,7 +1,7 @@
 import { RawData } from 'ws';
 import {
   addShips,
-  addToRoom,
+  addToRoom, attackAcceptor,
   createGame,
   createRoom,
   getOpposer,
@@ -71,14 +71,25 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
     case WsAction.add_ships:
       addShips(data)
       const ships = getShips(uuid)
-      return [
-        {
-          type: WsAction.start_game,
-          data: obj2string(ships || {}),
-          id,
-          broadcast: BroadcastType.personal,
-        }
-      ]
+      if (ships && ships.players > 1) {
+        return [
+          {
+            type: WsAction.start_game,
+            data: obj2string(ships || {}),
+            id,
+            broadcast: BroadcastType.public,
+          }
+        ];
+      }
+      break;
+    case WsAction.attack:
+      attackAcceptor(data, uuid);
+      return [{
+        type: WsAction.attack,
+        data: obj2string(attackAcceptor(data, uuid)),
+        id,
+        broadcast: BroadcastType.opposer,
+      }]
     default:
       console.log('Default action');
   }

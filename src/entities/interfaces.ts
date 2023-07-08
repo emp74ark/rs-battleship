@@ -31,3 +31,10 @@ export interface IDb {
   rooms: IRoom[];
   games: IGame[];
 }
+
+export interface IAttack {
+  gameID: number;
+  x: number;
+  y: number;
+  indexPlayer: number;
+}

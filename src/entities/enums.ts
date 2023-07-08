@@ -51,3 +51,9 @@ export enum BroadcastType {
   opposer = 'opposer',
   public = 'public',
 }
+
+export enum AttackResult {
+  miss = 'miss',
+  killed = 'killed',
+  shot = 'shot',
+}
