@@ -31,6 +31,7 @@ export interface IDb {
   users: IUser[];
   rooms: IRoom[];
   games: IGame[];
+  winners: Record<number, number>
 }
 
 export interface IAttack {

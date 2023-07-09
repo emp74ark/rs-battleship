@@ -2,6 +2,7 @@ import { RawData } from 'ws';
 import {
   addShips,
   addToRoom,
+  addWinner,
   attackAcceptor,
   createGame,
   createRoom,
@@ -9,6 +10,7 @@ import {
   getRoom,
   getShips,
   getUser,
+  getWinner,
   userLogin,
 } from './db.js';
 import { buf2obj, obj2string, str2obj } from './utils.js';
@@ -17,6 +19,8 @@ import { AttackResult, BroadcastType, WsAction } from '../entities/enums.js';
 
 export const actionsRouter = (clientData: RawData, uuid: number) => {
   const { type, data, id } = buf2obj(clientData);
+  const attacker = getUser(uuid);
+  const opposer = getOpposer(uuid);
 
   msgDebug(buf2obj(clientData));
 
@@ -48,7 +52,7 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
           type: WsAction.create_game,
           data: obj2string({
             idGame,
-            idPlayer: getUser(uuid)?.index,
+            idPlayer: attacker?.index,
           }),
           id: 0,
           broadcast: BroadcastType.personal,
@@ -57,7 +61,7 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
           type: WsAction.create_game,
           data: obj2string({
             idGame,
-            idPlayer: getOpposer(uuid)?.index,
+            idPlayer: opposer?.index,
           }),
           id: 0,
           broadcast: BroadcastType.opposer,
@@ -83,7 +87,7 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
           {
             type: WsAction.turn,
             data: obj2string({
-              currentPlayer: getUser(uuid)?.index,
+              currentPlayer: attacker?.index,
             }),
             id,
             broadcast: BroadcastType.personal,
@@ -104,29 +108,41 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
           {
             type: WsAction.turn,
             data: obj2string({
-              currentPlayer: attack.status !== AttackResult.miss ? getUser(uuid)?.index : getOpposer(uuid)?.index,
+              currentPlayer: attack.status !== AttackResult.miss ? attacker?.index : opposer?.index,
             }),
             id,
             broadcast: attack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
           },
         ];
       }
+
+      addWinner(attacker?.index);
       return [
         {
           type: WsAction.finish,
-          data: obj2string({
-            winPlayer: getUser(uuid)?.index
-          }),
+          data: obj2string({ winPlayer: attacker?.index }),
           id,
           broadcast: BroadcastType.public,
         },
-      ]
+        {
+          type: WsAction.update_winners,
+          data: obj2string([
+            {
+              name: attacker?.name,
+              wins: getWinner(attacker?.index),
+            },
+          ]),
+          id,
+          broadcast: BroadcastType.public,
+        },
+      ];
     case WsAction.randomAttack:
       const dataWithPosition = obj2string({
         ...str2obj(data),
         x: Math.floor(Math.random() * 9),
         y: Math.floor(Math.random() * 9),
-      })
+      });
+
       const randomAttack = attackAcceptor(dataWithPosition, uuid);
       if (randomAttack.survived) {
         return [
@@ -139,23 +155,33 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
           {
             type: WsAction.turn,
             data: obj2string({
-              currentPlayer: randomAttack.status !== AttackResult.miss ? getUser(uuid)?.index : getOpposer(uuid)?.index,
+              currentPlayer: randomAttack.status !== AttackResult.miss ? attacker?.index : opposer?.index,
             }),
             id,
             broadcast: randomAttack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
           },
         ];
       }
+      addWinner(attacker?.index);
       return [
         {
           type: WsAction.finish,
-          data: obj2string({
-            winPlayer: getUser(uuid)?.index
-          }),
+          data: obj2string({ winPlayer: attacker?.index }),
           id,
           broadcast: BroadcastType.public,
         },
-      ]
+        {
+          type: WsAction.update_winners,
+          data: obj2string([
+            {
+              name: attacker?.name,
+              wins: getWinner(attacker?.index),
+            },
+          ]),
+          id,
+          broadcast: BroadcastType.public,
+        },
+      ];
     default:
       console.log('Default action');
   }

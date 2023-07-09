@@ -1,4 +1,4 @@
-import { msgDbMessage, msgDebug } from './messages.js';
+import { msgDbMessage } from './messages.js';
 import { obj2string, str2obj } from './utils.js';
 import { IDb } from '../entities/interfaces.js';
 import { WsAction } from '../entities/enums.js';
@@ -8,6 +8,7 @@ const db: IDb = {
   users: [],
   rooms: [],
   games: [],
+  winners: {},
 };
 
 const userLogin = (data: string, id: number, uuid: number) => {
@@ -108,23 +109,35 @@ const getShips = (uuid: number) => {
 };
 
 const attackAcceptor = (data: string, uuid: number) => {
-  const currentPlayer = getUser(uuid)?.index
+  const currentPlayer = getUser(uuid)?.index;
   const opposPlayer = getOpposer(uuid)?.index;
   const table = db.games.find((game) => game.indexPlayer === opposPlayer)?.table;
 
   const { x, y } = str2obj(data);
-  const result = attackTarget(x, y, (table || []))
+  const result = attackTarget(x, y, table || []);
 
   db.games.map((game) => {
     if (game.indexPlayer === opposPlayer) game.table = result.table;
   });
 
   return {
-    position: { x, y},
+    position: { x, y },
     currentPlayer,
     status: result.attack,
-    survived: checkSurvived(table || [])
+    survived: checkSurvived(table || []),
+  };
+};
+
+const addWinner = (winner?: number) => {
+  if (winner && !db.winners[winner]) {
+    db.winners[winner] = 1;
+  } else if (winner && db.winners[winner] > 0) {
+    db.winners[winner] += 1;
   }
+};
+
+const getWinner = (winner?: number) => {
+  return winner ? db.winners[winner] : 0;
 };
 
 export {
@@ -138,4 +151,6 @@ export {
   addShips,
   getShips,
   attackAcceptor,
+  addWinner,
+  getWinner,
 };
