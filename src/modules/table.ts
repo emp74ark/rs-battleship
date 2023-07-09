@@ -1,5 +1,6 @@
 import { IShip } from '../entities/interfaces.js';
 import { AttackResult } from '../entities/enums.js';
+import { msgDebug } from './messages.js';
 
 export const shipsTable = (data: IShip[]) => {
   const table: number[][] = new Array(10);
@@ -14,12 +15,26 @@ export const shipsTable = (data: IShip[]) => {
   return table;
 };
 
-export const attackTarget = (x: number, y: number, table: number[][]) => {
-  const target = {
-    shot: false,
-    killed: false
-  }
-  if (table[y][x]) target.shot = true
+const checkKilled = (x: number, y: number, table: number[][]) => {
+  const lowerY = y - (y > 0 ? 1 : 0);
+  const higherY = y + (y < 9 ? 1 : 0);
+  const lowerX = x - (x > 0 ? 1 : 0);
+  const higherX = x + (x < 9 ? 1 : 0);
+  return table[lowerY][x] !== 1 && table[higherY][x] !== 1 && table[y][lowerX] !== 1 && table[y][higherX] !== 1;
+};
 
-  return target.shot ? AttackResult.shot : AttackResult.miss
-}
+export const attackTarget = (x: number, y: number, table: number[][]) => {
+  const result = {
+    attack: AttackResult.shot,
+    table,
+  };
+
+  if (table[y][x] !== 0) {
+    table[y][x] = 2;
+    result.attack = checkKilled(x, y, table) ? AttackResult.killed : AttackResult.shot;
+  } else {
+    result.attack = AttackResult.miss;
+  }
+
+  return result;
+};

@@ -23,6 +23,7 @@ export interface IRoom {
 export interface IGame {
   gameId: number;
   ships?: IShip[];
+  table?: number[][];
   indexPlayer?: number;
 }
 

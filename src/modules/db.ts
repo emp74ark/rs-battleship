@@ -78,21 +78,22 @@ const createGame = () => {
 const addShips = (data: string) => {
   const { gameId, ships, indexPlayer } = str2obj(data);
   const game = db.games.find((game) => game.gameId === gameId);
+  const table = shipsTable(ships);
 
   if ((game && game.indexPlayer === undefined) || (game && game.indexPlayer === indexPlayer)) {
     db.games.map((game) => {
       game.ships = ships;
+      game.table = table;
       game.indexPlayer = indexPlayer;
     });
   } else if (game && game.indexPlayer !== indexPlayer) {
     db.games.push({
       gameId,
       ships,
+      table,
       indexPlayer,
     });
   }
-
-  msgDebug(db);
 };
 
 const getShips = (uuid: number) => {
@@ -107,15 +108,21 @@ const getShips = (uuid: number) => {
 };
 
 const attackAcceptor = (data: string, uuid: number) => {
-  const indexPlayer = getUser(uuid)?.index;
-  const ships = db.games.find((game) => game.indexPlayer !== indexPlayer)?.ships;
+  const currentPlayer = getUser(uuid)?.index
+  const opposPlayer = getOpposer(uuid)?.index;
+  const table = db.games.find((game) => game.indexPlayer === opposPlayer)?.table;
+
   const { x, y } = str2obj(data);
-  const table = shipsTable(ships || [])
-  const result = attackTarget(x, y, table)
+  const result = attackTarget(x, y, (table || []))
+
+  db.games.map((game) => {
+    if (game.indexPlayer === opposPlayer) game.table = result.table;
+  });
+
   return {
     position: { x, y},
-    currentPlayer: indexPlayer,
-    status: result,
+    currentPlayer,
+    status: result.attack,
   }
 };
 

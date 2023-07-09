@@ -83,10 +83,10 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
       }
       break;
     case WsAction.attack:
-      attackAcceptor(data, uuid);
+      const attack = attackAcceptor(data, uuid);
       return [{
         type: WsAction.attack,
-        data: obj2string(attackAcceptor(data, uuid)),
+        data: obj2string(attack),
         id,
         broadcast: BroadcastType.opposer,
       }]
