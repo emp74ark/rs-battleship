@@ -38,3 +38,7 @@ export const attackTarget = (x: number, y: number, table: number[][]) => {
 
   return result;
 };
+
+export const checkSurvived = (table: number[][]) => {
+  return Boolean(table.flat(Infinity).find(el => el === 1))
+}

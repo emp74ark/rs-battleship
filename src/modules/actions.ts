@@ -93,22 +93,34 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
       break;
     case WsAction.attack:
       const attack = attackAcceptor(data, uuid);
+      if (attack.survived) {
+        return [
+          {
+            type: WsAction.attack,
+            data: obj2string(attack),
+            id,
+            broadcast: BroadcastType.opposer,
+          },
+          {
+            type: WsAction.turn,
+            data: obj2string({
+              currentPlayer: attack.status !== AttackResult.miss ? getUser(uuid)?.index : getOpposer(uuid)?.index,
+            }),
+            id,
+            broadcast: attack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
+          },
+        ];
+      }
       return [
         {
-          type: WsAction.attack,
-          data: obj2string(attack),
-          id,
-          broadcast: BroadcastType.opposer,
-        },
-        {
-          type: WsAction.turn,
+          type: WsAction.finish,
           data: obj2string({
-            currentPlayer: attack.status !== AttackResult.miss ? getUser(uuid)?.index : getOpposer(uuid)?.index,
+            winPlayer: getUser(uuid)?.index
           }),
           id,
-          broadcast: attack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
+          broadcast: BroadcastType.public,
         },
-      ];
+      ]
     case WsAction.randomAttack:
       const dataWithPosition = obj2string({
         ...str2obj(data),
@@ -116,22 +128,34 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
         y: Math.floor(Math.random() * 9),
       })
       const randomAttack = attackAcceptor(dataWithPosition, uuid);
+      if (randomAttack.survived) {
+        return [
+          {
+            type: WsAction.attack,
+            data: obj2string(randomAttack),
+            id,
+            broadcast: BroadcastType.opposer,
+          },
+          {
+            type: WsAction.turn,
+            data: obj2string({
+              currentPlayer: randomAttack.status !== AttackResult.miss ? getUser(uuid)?.index : getOpposer(uuid)?.index,
+            }),
+            id,
+            broadcast: randomAttack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
+          },
+        ];
+      }
       return [
         {
-          type: WsAction.attack,
-          data: obj2string(randomAttack),
-          id,
-          broadcast: BroadcastType.opposer,
-        },
-        {
-          type: WsAction.turn,
+          type: WsAction.finish,
           data: obj2string({
-            currentPlayer: randomAttack.status !== AttackResult.miss ? getUser(uuid)?.index : getOpposer(uuid)?.index,
+            winPlayer: getUser(uuid)?.index
           }),
           id,
-          broadcast: randomAttack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
+          broadcast: BroadcastType.public,
         },
-      ];
+      ]
     default:
       console.log('Default action');
   }

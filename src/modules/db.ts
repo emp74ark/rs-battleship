@@ -2,7 +2,7 @@ import { msgDbMessage, msgDebug } from './messages.js';
 import { obj2string, str2obj } from './utils.js';
 import { IDb } from '../entities/interfaces.js';
 import { WsAction } from '../entities/enums.js';
-import { attackTarget, shipsTable } from './table.js';
+import { attackTarget, checkSurvived, shipsTable } from './table.js';
 
 const db: IDb = {
   users: [],
@@ -123,6 +123,7 @@ const attackAcceptor = (data: string, uuid: number) => {
     position: { x, y},
     currentPlayer,
     status: result.attack,
+    survived: checkSurvived(table || [])
   }
 };
 
