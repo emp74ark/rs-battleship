@@ -1,4 +1,4 @@
-import { msgDbMessage } from './messages.js';
+import { msgDbMessage, msgDebug } from './messages.js';
 import { obj2string, str2obj } from './utils.js';
 import { IDb } from '../entities/interfaces.js';
 import { WsAction } from '../entities/enums.js';
@@ -60,8 +60,9 @@ const createRoom = (uuid: number) => {
 const addToRoom = (roomId: number, uuid: number) => {
   const user = getUser(uuid);
   db.rooms.map((room) => {
-    if (room.id === roomId && user && !room.roomUsers.includes(user)) {
-      room.roomUsers = [...room.roomUsers, user];
+    if (room.id === roomId && user) {
+      const userExistInRoom = Boolean(room.roomUsers.find((user) => user.uuid === uuid));
+      room.roomUsers = userExistInRoom ? room.roomUsers : [...room.roomUsers, user];
     }
   });
 };
