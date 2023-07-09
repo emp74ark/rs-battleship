@@ -1,7 +1,8 @@
 import { RawData } from 'ws';
 import {
   addShips,
-  addToRoom, attackAcceptor,
+  addToRoom,
+  attackAcceptor,
   createGame,
   createRoom,
   getOpposer,
@@ -10,9 +11,9 @@ import {
   getUser,
   userLogin,
 } from './db.js';
-import { buf2obj, obj2string } from './utils.js';
+import { buf2obj, obj2string, str2obj } from './utils.js';
 import { msgDebug } from './messages.js';
-import { BroadcastType, WsAction } from '../entities/enums.js';
+import { AttackResult, BroadcastType, WsAction } from '../entities/enums.js';
 
 export const actionsRouter = (clientData: RawData, uuid: number) => {
   const { type, data, id } = buf2obj(clientData);
@@ -69,8 +70,8 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
         },
       ];
     case WsAction.add_ships:
-      addShips(data)
-      const ships = getShips(uuid)
+      addShips(data);
+      const ships = getShips(uuid);
       if (ships && ships.players > 1) {
         return [
           {
@@ -78,18 +79,59 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
             data: obj2string(ships || {}),
             id,
             broadcast: BroadcastType.public,
-          }
+          },
+          {
+            type: WsAction.turn,
+            data: obj2string({
+              currentPlayer: getUser(uuid)?.index,
+            }),
+            id,
+            broadcast: BroadcastType.personal,
+          },
         ];
       }
       break;
     case WsAction.attack:
       const attack = attackAcceptor(data, uuid);
-      return [{
-        type: WsAction.attack,
-        data: obj2string(attack),
-        id,
-        broadcast: BroadcastType.opposer,
-      }]
+      return [
+        {
+          type: WsAction.attack,
+          data: obj2string(attack),
+          id,
+          broadcast: BroadcastType.opposer,
+        },
+        {
+          type: WsAction.turn,
+          data: obj2string({
+            currentPlayer: attack.status !== AttackResult.miss ? getUser(uuid)?.index : getOpposer(uuid)?.index,
+          }),
+          id,
+          broadcast: attack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
+        },
+      ];
+    case WsAction.randomAttack:
+      const dataWithPosition = obj2string({
+        ...str2obj(data),
+        x: Math.floor(Math.random() * 9),
+        y: Math.floor(Math.random() * 9),
+      })
+      const randomAttack = attackAcceptor(dataWithPosition, uuid);
+      return [
+        {
+          type: WsAction.attack,
+          data: obj2string(randomAttack),
+          id,
+          broadcast: BroadcastType.opposer,
+        },
+        {
+          type: WsAction.turn,
+          data: obj2string({
+            currentPlayer: randomAttack.status !== AttackResult.miss ? getUser(uuid)?.index : getOpposer(uuid)?.index,
+          }),
+          id,
+          broadcast: randomAttack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
+        },
+      ];
     default:
       console.log('Default action');
   }
