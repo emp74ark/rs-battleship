@@ -14,7 +14,6 @@ import {
   userLogin,
 } from './db.js';
 import { buf2obj, obj2string, str2obj } from './utils.js';
-import { msgDebug } from './messages.js';
 import { AttackResult, BroadcastType, WsAction } from '../entities/enums.js';
 
 export const actionsRouter = (clientData: RawData, uuid: number) => {
@@ -44,7 +43,7 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
       ];
     case WsAction.add_user_to_room:
       addToRoom(0, uuid);
-      const room = getRoom(0)
+      const room = getRoom(0);
       if (room[0].roomUsers.length < 2) {
         return [
           {
@@ -52,8 +51,8 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
             data: obj2string(room),
             id,
             broadcast: BroadcastType.public,
-          }
-        ]
+          },
+        ];
       } else {
         const idGame = createGame();
         return [
@@ -83,6 +82,25 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
           },
         ];
       }
+    case WsAction.single_play:
+      const idGame = createGame();
+      return [
+        {
+          type: WsAction.create_game,
+          data: obj2string({
+            idGame,
+            idPlayer: attacker?.index,
+          }),
+          id: 0,
+          broadcast: BroadcastType.personal,
+        },
+        {
+          type: WsAction.update_room,
+          data: obj2string(getRoom(0)),
+          id,
+          broadcast: BroadcastType.public,
+        },
+      ];
     case WsAction.add_ships:
       addShips(data);
       const ships = getShips(uuid);

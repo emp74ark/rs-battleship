@@ -1,4 +1,4 @@
-import { msgDbMessage, msgDebug } from './messages.js';
+import { msgDbMessage } from './messages.js';
 import { obj2string, str2obj } from './utils.js';
 import { IDb } from '../entities/interfaces.js';
 import { WsAction } from '../entities/enums.js';

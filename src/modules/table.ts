@@ -1,6 +1,5 @@
 import { IShip } from '../entities/interfaces.js';
 import { AttackResult } from '../entities/enums.js';
-import { msgDebug } from './messages.js';
 
 export const shipsTable = (data: IShip[]) => {
   const table: number[][] = new Array(10);
