@@ -15,6 +15,9 @@ import {
 } from './db.js';
 import { buf2obj, obj2string, str2obj } from './utils.js';
 import { AttackResult, BroadcastType, WsAction } from '../entities/enums.js';
+import { msgDebug } from './messages.js';
+
+let turn: number | undefined;
 
 export const actionsRouter = (clientData: RawData, uuid: number) => {
   const { type, data, id } = buf2obj(clientData);
@@ -82,29 +85,31 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
           },
         ];
       }
-    case WsAction.single_play:
-      const idGame = createGame();
-      return [
-        {
-          type: WsAction.create_game,
-          data: obj2string({
-            idGame,
-            idPlayer: attacker?.index,
-          }),
-          id: 0,
-          broadcast: BroadcastType.personal,
-        },
-        {
-          type: WsAction.update_room,
-          data: obj2string(getRoom(0)),
-          id,
-          broadcast: BroadcastType.public,
-        },
-      ];
+    // case WsAction.single_play:
+    //   const idGame = createGame();
+    //   return [
+    //     {
+    //       type: WsAction.create_game,
+    //       data: obj2string({
+    //         idGame,
+    //         idPlayer: attacker?.index,
+    //       }),
+    //       id: 0,
+    //       broadcast: BroadcastType.personal,
+    //     },
+    //     {
+    //       type: WsAction.update_room,
+    //       data: obj2string(getRoom(0)),
+    //       id,
+    //       broadcast: BroadcastType.public,
+    //     },
+    //   ];
     case WsAction.add_ships:
       addShips(data);
       const ships = getShips(uuid);
+      msgDebug(uuid)
       if (ships && ships.players > 1) {
+        turn = attacker?.uuid;
         return [
           {
             type: WsAction.start_game,
@@ -124,44 +129,52 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
       }
       break;
     case WsAction.attack:
+
+      if (uuid !== turn) {
+        msgDebug('It is not your turn')
+        return false;
+      }
+
       const attack = attackAcceptor(data, uuid);
-      if (attack.survived) {
+      turn = attack.status !== AttackResult.miss ? attacker?.uuid : opposer?.uuid
+
+      if (!attack.survived) {
+        addWinner(attacker?.index);
         return [
           {
-            type: WsAction.attack,
-            data: obj2string(attack),
+            type: WsAction.finish,
+            data: obj2string({ winPlayer: attacker?.index }),
             id,
-            broadcast: BroadcastType.opposer,
+            broadcast: BroadcastType.public,
           },
           {
-            type: WsAction.turn,
-            data: obj2string({
-              currentPlayer: attack.status !== AttackResult.miss ? attacker?.index : opposer?.index,
-            }),
+            type: WsAction.update_winners,
+            data: obj2string([
+              {
+                name: attacker?.name,
+                wins: getWinner(attacker?.index),
+              },
+            ]),
             id,
-            broadcast: attack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
+            broadcast: BroadcastType.public,
           },
         ];
       }
 
-      addWinner(attacker?.index);
       return [
         {
-          type: WsAction.finish,
-          data: obj2string({ winPlayer: attacker?.index }),
+          type: WsAction.attack,
+          data: obj2string(attack),
           id,
-          broadcast: BroadcastType.public,
+          broadcast: BroadcastType.opposer,
         },
         {
-          type: WsAction.update_winners,
-          data: obj2string([
-            {
-              name: attacker?.name,
-              wins: getWinner(attacker?.index),
-            },
-          ]),
+          type: WsAction.turn,
+          data: obj2string({
+            currentPlayer: attack.status !== AttackResult.miss ? attacker?.index : opposer?.index,
+          }),
           id,
-          broadcast: BroadcastType.public,
+          broadcast: attack.status !== AttackResult.miss ? BroadcastType.personal : BroadcastType.opposer,
         },
       ];
     case WsAction.randomAttack:

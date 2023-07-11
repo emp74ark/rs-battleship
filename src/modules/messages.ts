@@ -2,7 +2,7 @@ import { Color, ServerType } from '../entities/enums.js';
 import { IncomingMessage } from 'http';
 
 export const msgDebug = (message: any) => {
-  console.log(Color.FgMagenta, '[DEBUG] ', message, Color.Reset);
+  console.log(Color.FgCyan, '[DEBUG] ', message, Color.Reset);
 }
 
 export const msgServerStart = (type: ServerType, port: number) => {
