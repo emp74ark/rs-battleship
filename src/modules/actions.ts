@@ -33,7 +33,7 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
         },
       ];
     case WsAction.create_room:
-      const roomId = createRoom(uuid);
+      const roomId = createRoom();
       addToRoom(roomId, uuid);
 
       return [
@@ -107,9 +107,10 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
     case WsAction.add_ships:
       addShips(data);
       const ships = getShips(uuid);
-      msgDebug(uuid)
+
       if (ships && ships.players > 1) {
-        turn = attacker?.uuid;
+        turn = uuid;
+
         return [
           {
             type: WsAction.start_game,
@@ -120,7 +121,7 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
           {
             type: WsAction.turn,
             data: obj2string({
-              currentPlayer: attacker?.index,
+              currentPlayer: getUser(uuid)?.index,
             }),
             id,
             broadcast: BroadcastType.personal,
@@ -184,7 +185,14 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
         y: Math.floor(Math.random() * 9),
       });
 
+      if (uuid !== turn) {
+        msgDebug('It is not your turn')
+        return false;
+      }
+
       const randomAttack = attackAcceptor(dataWithPosition, uuid);
+      turn = randomAttack.status !== AttackResult.miss ? attacker?.uuid : opposer?.uuid
+
       if (randomAttack.survived) {
         return [
           {

@@ -50,7 +50,7 @@ const getOpposer = (uuid: number) => {
   return db.users.find((user) => user.uuid !== uuid);
 };
 
-const createRoom = (uuid: number) => {
+const createRoom = () => {
   const id = db.rooms.length;
   db.rooms.push({ id, roomUsers: [] });
   msgDbMessage(`room with id '${id}' was created`);
@@ -88,7 +88,9 @@ const addShips = (data: string) => {
       game.table = table;
       game.indexPlayer = indexPlayer;
     });
-  } else if (game && game.indexPlayer !== indexPlayer) {
+  }
+
+  else if (game && game.indexPlayer !== indexPlayer) {
     db.games.push({
       gameId,
       ships,
@@ -100,7 +102,7 @@ const addShips = (data: string) => {
 
 const getShips = (uuid: number) => {
   const indexPlayer = getUser(uuid)?.index;
-  if (indexPlayer) {
+  if (indexPlayer !== undefined) {
     return {
       ships: db.games.find((game) => game.indexPlayer === indexPlayer)?.ships,
       indexPlayer,

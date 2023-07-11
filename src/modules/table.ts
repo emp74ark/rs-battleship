@@ -24,20 +24,18 @@ const checkKilled = (x: number, y: number, table: number[][]) => {
 
 export const attackTarget = (x: number, y: number, table: number[][]) => {
   const result = {
-    attack: AttackResult.shot,
+    attack: AttackResult.miss,
     table,
   };
 
   if (table[y][x] !== 0) {
     table[y][x] = 2;
     result.attack = checkKilled(x, y, table) ? AttackResult.killed : AttackResult.shot;
-  } else {
-    result.attack = AttackResult.miss;
   }
 
   return result;
 };
 
 export const checkSurvived = (table: number[][]) => {
-  return Boolean(table.flat(Infinity).find(el => el === 1))
-}
+  return Boolean(table.flat(Infinity).find((el) => el === 1));
+};
