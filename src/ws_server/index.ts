@@ -1,4 +1,4 @@
-import { msgServerStart, msgServerStop, msgWsRequest } from '../modules/messages.js';
+import { msgServerStart, msgServerStop } from '../modules/messages.js';
 import { BroadcastType, ServerType } from '../entities/enums.js';
 import { WS_PORT } from '../modules/config.js';
 import { WebSocket, WebSocketServer } from 'ws';
@@ -9,13 +9,18 @@ interface ExtWs extends WebSocket {
   uuid: number;
 }
 
-export const startWsServer = () => {
-  const wss = new WebSocketServer({ port: WS_PORT });
+const wss = new WebSocketServer({ port: WS_PORT });
 
+export const botSender = (data: string) => {
+  wss.clients.forEach((client) => {
+    client.send(data);
+  });
+};
+
+export const startWsServer = () => {
   msgServerStart(ServerType.ws, WS_PORT);
 
   wss.on('connection', (ws: ExtWs, request) => {
-    msgWsRequest(request);
     ws.uuid = Date.now();
     ws.on('message', async (data) => {
       const response = actionsRouter(data, ws.uuid);

@@ -88,9 +88,7 @@ const addShips = (data: string) => {
       game.table = table;
       game.indexPlayer = indexPlayer;
     });
-  }
-
-  else if (game && game.indexPlayer !== indexPlayer) {
+  } else if (game && game.indexPlayer !== indexPlayer) {
     db.games.push({
       gameId,
       ships,
