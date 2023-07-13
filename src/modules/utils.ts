@@ -24,7 +24,7 @@ export const botCheck = (user?: IUser) => {
 
 export const randomCoordinate = () => {
   return {
-    x: Math.floor(Math.random() * 9),
-    y: Math.floor(Math.random() * 9),
+    x: Math.floor(Math.random() * 10),
+    y: Math.floor(Math.random() * 10),
   };
 };

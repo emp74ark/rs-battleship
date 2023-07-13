@@ -258,6 +258,33 @@ export const actionsRouter = (clientData: RawData, uuid: number) => {
       turn = randomAttack.status !== AttackResult.miss ? attacker?.uuid : opposer?.uuid;
 
       if (randomAttack.survived) {
+
+        while (turn && botCheck(getUser(turn))) {
+          const coordinates = randomCoordinate();
+          const botAttack = attackAcceptor(obj2string(coordinates), botUuid);
+          turn = botAttack.status === AttackResult.miss ? getOpposer(botUuid)?.uuid : getUser(botUuid)?.uuid;
+          msgDebug(`Bot attack to ${coordinates.x}:${coordinates.y} result: ${botAttack.status}`);
+
+          botSender(
+            obj2string({
+              type: WsAction.attack,
+              data: obj2string(botAttack),
+              id,
+              broadcast: BroadcastType.public,
+            }),
+          );
+          botSender(
+            obj2string({
+              type: WsAction.turn,
+              data: obj2string({
+                currentPlayer: getUser(turn!)?.index,
+              }),
+              id,
+              broadcast: BroadcastType.public,
+            }),
+          );
+        }
+
         return [
           {
             type: WsAction.attack,
